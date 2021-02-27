@@ -191,6 +191,172 @@ namespace RageLib.GTA5.Cryptography
             result[15] = (byte)((x4 >> 24) & 0xFF);
             return result;
         }
-        
+
+        public static byte[] Encrypt(byte[] data, byte[] key)
+        {
+            var array = new byte[data.Length];
+            var array2 = new uint[key.Length / 4];
+
+            Buffer.BlockCopy(key, 0, array2, 0, key.Length);
+            for (var i = 0; i < data.Length / 16; i++)
+            {
+                var array3 = new byte[16];
+                Array.Copy(data, 16 * i, array3, 0, 16);
+                var sourceArray = EncryptBlock(array3, array2);
+                Array.Copy(sourceArray, 0, array, 16 * i, 16);
+            }
+
+            if (data.Length % 16 != 0)
+            {
+                var num = data.Length % 16;
+                Buffer.BlockCopy(data, data.Length - num, array, data.Length - num, num);
+            }
+
+            return array;
+        }
+
+        public static byte[] EncryptBlock(byte[] data, uint[] key)
+        {
+            var array = new uint[17][];
+            for (var i = 0; i < 17; i++)
+            {
+                array[i] = new uint[4];
+                array[i][0] = key[4 * i];
+                array[i][1] = key[4 * i + 1];
+                array[i][2] = key[4 * i + 2];
+                array[i][3] = key[4 * i + 3];
+            }
+            var array2 = EncryptRoundA(data, array[16], GTA5Constants.PC_NG_ENCRYPT_TABLES[16]);
+            for (var j = 15; j >= 2; j--)
+                array2 = EncryptRoundB_LUT(array2, array[j], GTA5Constants.PC_NG_ENCRYPT_LUTs[j]);
+            array2 = EncryptRoundA(array2, array[1], GTA5Constants.PC_NG_ENCRYPT_TABLES[1]);
+            return EncryptRoundA(array2, array[0], GTA5Constants.PC_NG_ENCRYPT_TABLES[0]);
+        }
+
+        public static byte[] EncryptRoundA(byte[] data, uint[] key, uint[][] table)
+        {
+            var array = new byte[16];
+            Buffer.BlockCopy(key, 0, array, 0, 16);
+            var value = table[0][data[0] ^ array[0]] ^ table[1][data[1] ^ array[1]] ^ table[2][data[2] ^ array[2]] ^ table[3][data[3] ^ array[3]];
+            var value2 = table[4][data[4] ^ array[4]] ^ table[5][data[5] ^ array[5]] ^ table[6][data[6] ^ array[6]] ^ table[7][data[7] ^ array[7]];
+            var value3 = table[8][data[8] ^ array[8]] ^ table[9][data[9] ^ array[9]] ^ table[10][data[10] ^ array[10]] ^ table[11][data[11] ^ array[11]];
+            var value4 = table[12][data[12] ^ array[12]] ^ table[13][data[13] ^ array[13]] ^ table[14][data[14] ^ array[14]] ^ table[15][data[15] ^ array[15]];
+            var array2 = new byte[16];
+            Array.Copy(BitConverter.GetBytes(value), 0, array2, 0, 4);
+            Array.Copy(BitConverter.GetBytes(value2), 0, array2, 4, 4);
+            Array.Copy(BitConverter.GetBytes(value3), 0, array2, 8, 4);
+            Array.Copy(BitConverter.GetBytes(value4), 0, array2, 12, 4);
+            return array2;
+        }
+
+        public static byte[] EncryptRoundA_LUT(byte[] dataOld, uint[] key, GTA5CryptoLUT[] lut)
+        {
+            var array = (byte[])dataOld.Clone();
+            var array2 = new byte[16];
+            Buffer.BlockCopy(key, 0, array2, 0, 16);
+            for (var i = 0; i < 16; i++)
+            {
+                var array3 = array;
+                var num = i;
+                array3[num] ^= array2[i];
+            }
+
+            var x1 = BitConverter.ToUInt32(new[] { array[0], array[1], array[2], array[3] }, 0);
+            var x2 = BitConverter.ToUInt32(new[] { array[4], array[5], array[6], array[7] }, 0);
+            var x3 = BitConverter.ToUInt32(new[] { array[8], array[9], array[10], array[11] }, 0);
+            var x4 = BitConverter.ToUInt32(new[] { array[12], array[13], array[14], array[15] }, 0);
+
+            return new[]
+            {
+                lut[0].LookUp(x1),
+                lut[1].LookUp(x1),
+                lut[2].LookUp(x1),
+                lut[3].LookUp(x1),
+                lut[4].LookUp(x2),
+                lut[5].LookUp(x2),
+                lut[6].LookUp(x2),
+                lut[7].LookUp(x2),
+                lut[8].LookUp(x3),
+                lut[9].LookUp(x3),
+                lut[10].LookUp(x3),
+                lut[11].LookUp(x3),
+                lut[12].LookUp(x4),
+                lut[13].LookUp(x4),
+                lut[14].LookUp(x4),
+                lut[15].LookUp(x4)
+            };
+        }
+
+        public static byte[] EncryptRoundB_LUT(byte[] dataOld, uint[] key, GTA5CryptoLUT[] lut)
+        {
+            var array = (byte[])dataOld.Clone();
+            var array2 = new byte[16];
+            Buffer.BlockCopy(key, 0, array2, 0, 16);
+            for (var i = 0; i < 16; i++)
+            {
+                var array3 = array;
+                var num = i;
+                array3[num] ^= array2[i];
+            }
+
+            var x1 = BitConverter.ToUInt32(new[] { array[0], array[1], array[2], array[3] }, 0);
+            var x2 = BitConverter.ToUInt32(new[] { array[4], array[5], array[6], array[7] }, 0);
+            var x3 = BitConverter.ToUInt32(new[] { array[8], array[9], array[10], array[11] }, 0);
+            var x4 = BitConverter.ToUInt32(new[] { array[12], array[13], array[14], array[15] }, 0);
+
+            return new[]
+            {
+                lut[0].LookUp(x1),
+                lut[1].LookUp(x2),
+                lut[2].LookUp(x3),
+                lut[3].LookUp(x4),
+                lut[4].LookUp(x2),
+                lut[5].LookUp(x3),
+                lut[6].LookUp(x4),
+                lut[7].LookUp(x1),
+                lut[8].LookUp(x3),
+                lut[9].LookUp(x4),
+                lut[10].LookUp(x1),
+                lut[11].LookUp(x2),
+                lut[12].LookUp(x4),
+                lut[13].LookUp(x1),
+                lut[14].LookUp(x2),
+                lut[15].LookUp(x3)
+            };
+        }
+    }
+
+    public class GTA5CryptoLUT
+    {
+
+        public byte[][] LUT0;
+        public byte[][] LUT1;
+
+        public byte[] Indices;
+
+        public GTA5CryptoLUT()
+        {
+            LUT0 = new byte[256][];
+            for (var i = 0; i < 256; i++)
+            {
+                LUT0[i] = new byte[256];
+            }
+
+            LUT1 = new byte[256][];
+            for (var i = 0; i < 256; i++)
+            {
+                LUT1[i] = new byte[256];
+            }
+
+            Indices = new byte[65536];
+        }
+
+        public byte LookUp(uint value)
+        {
+            var num = (value & 0xFFFF0000u) >> 16;
+            var num2 = (value & 0xFF00u) >> 8;
+            var num3 = value & 0xFFu;
+            return LUT0[LUT1[Indices[(int)num]][(int)num2]][(int)num3];
+        }
     }
 }

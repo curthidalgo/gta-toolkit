@@ -431,6 +431,10 @@ namespace RageLib.GTA5.Cryptography
 
         // ng decryption tables...       
         public static uint[][][] PC_NG_DECRYPT_TABLES;
+        
+        public static uint[][][] PC_NG_ENCRYPT_TABLES;
+
+        public static GTA5CryptoLUT[][] PC_NG_ENCRYPT_LUTs;
 
         // hash lookup-table...
         public static byte[] PC_LUT;
@@ -495,6 +499,9 @@ namespace RageLib.GTA5.Cryptography
             PC_AES_KEY = File.ReadAllBytes(path + "\\gtav_aes_key.dat");
             PC_NG_KEYS = CryptoIO.ReadNgKeys(path + "\\gtav_ng_key.dat");
             PC_NG_DECRYPT_TABLES = CryptoIO.ReadNgTables(path + "\\gtav_ng_decrypt_tables.dat");
+            // TODO: NG Encryption
+            //PC_NG_ENCRYPT_TABLES = CryptoIO.ReadNgTables(path + "\\gtav_ng_encrypt_tables.dat");
+            //PC_NG_ENCRYPT_LUTs = CryptoIO.ReadNgLuts(path + "\\gtav_ng_encrypt_luts.dat");
             PC_LUT = File.ReadAllBytes(path + "\\gtav_hash_lut.dat");
         }
 
