@@ -356,6 +356,7 @@ namespace RageLib.GTA5.ArchiveWrappers
             {
                 fs.Dispose();
                 arch.Dispose();
+                return InternalOpenWithUnknownNGKey(fileName);
                 throw;
             }
         }
@@ -382,8 +383,54 @@ namespace RageLib.GTA5.ArchiveWrappers
             catch
             {
                 arch.Dispose();
+                return InternalOpenWithUnknownNGKey(stream, fileName, leaveOpen);
                 throw;
             }
+        }
+
+        // If we haven't the required key with just try with any of them
+        // We could make it faster to detect a wrong key by just checking if the root entry of a rpf is a folder
+        private static RageArchiveWrapper7 InternalOpenWithUnknownNGKey(string fileName)
+        {
+            for (int i = 0; i < GTA5Constants.PC_NG_KEYS.Length; i++)
+            {
+                var finfo = new FileInfo(fileName);
+                var fs = new FileStream(fileName, FileMode.Open);
+                var arch = new RageArchiveWrapper7(fs, finfo.Name, false);
+                try
+                {
+                    arch.archive_.ReadHeader(GTA5Constants.PC_AES_KEY, GTA5Constants.PC_NG_KEYS[i]);
+                    return arch;
+                }
+                catch
+                {
+                    fs.Dispose();
+                    arch.Dispose();
+                }
+            }
+
+            throw new Exception();
+        }
+
+        // If we haven't the required key with just try with any of them
+        // We could make it faster to detect a wrong key by just checking if the root entry of a rpf is a folder
+        private static RageArchiveWrapper7 InternalOpenWithUnknownNGKey(Stream stream, string fileName, bool leaveOpen = false)
+        {
+            for (int i = 0; i < GTA5Constants.PC_NG_KEYS.Length; i++)
+            {
+                var arch = new RageArchiveWrapper7(stream, fileName, leaveOpen);
+                try
+                {
+                    arch.archive_.ReadHeader(GTA5Constants.PC_AES_KEY, GTA5Constants.PC_NG_KEYS[i]);
+                    return arch;
+                }
+                catch
+                {
+                    arch.Dispose();
+                }
+            }
+
+            throw new Exception();
         }
     }
 
