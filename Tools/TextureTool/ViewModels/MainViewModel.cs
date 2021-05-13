@@ -135,16 +135,44 @@ namespace TextureTool.ViewModels
             //model.New();
 
             Title = "Texture Toolkit";
-            
-            NewCommand = new ActionCommand(New_Execute);
-            LoadCommand = new ActionCommand(Load_Execute);
-            SaveCommand = new ActionCommand(Save_Execute, Save_CanExecute);
-            SaveAsCommand = new ActionCommand(SaveAs_Execute, SaveAs_CanExecute);
-            ExitCommand = new ActionCommand(Exit_Execute);
-            ImportCommand = new ActionCommand(Import_Execute, Import_CanExecute);
-            ExportCommand = new ActionCommand(Export_Execute, Export_CanExecute);
-            ExportAllCommand = new ActionCommand(ExportAll_Execute, ExportAll_CanExecute);
-            DeleteCommand = new ActionCommand(Delete_Execute, Delete_CanExecute);
+            string[] args = System.Environment.GetCommandLineArgs();
+
+            if (args[1].Contains("unpack"))
+            {
+                Title = "Unpacking.. " + args[2];
+                model.Load(args[2]);
+                BuildTextureDictionaryList();
+                foreach (var texture in Textures)
+                    texture.GetModel().Export(args[3] + "\\" + texture.Name + ".dds");
+                System.Windows.Application.Current.Shutdown();
+            }
+            else if (args[1].Contains("import"))
+            {
+                Title = "Importing.. " + args[2];
+                model.Load(args[2]);
+                BuildTextureDictionaryList();
+                string[] allfiles = System.IO.Directory.GetFiles(args[3], "*.*", SearchOption.AllDirectories);
+                foreach (string theFiles in allfiles)
+                {
+                    SelectedTextureDictionary.GetModel().Import(theFiles, model.FileType != FileType.TextureDictionaryFile);
+                    Title = theFiles;
+                }
+                BuildTextureList();
+                model.Save(model.FileName);
+                System.Windows.Application.Current.Shutdown();
+            }
+            else
+            {
+                NewCommand = new ActionCommand(New_Execute);
+                LoadCommand = new ActionCommand(Load_Execute);
+                SaveCommand = new ActionCommand(Save_Execute, Save_CanExecute);
+                SaveAsCommand = new ActionCommand(SaveAs_Execute, SaveAs_CanExecute);
+                ExitCommand = new ActionCommand(Exit_Execute);
+                ImportCommand = new ActionCommand(Import_Execute, Import_CanExecute);
+                ExportCommand = new ActionCommand(Export_Execute, Export_CanExecute);
+                ExportAllCommand = new ActionCommand(ExportAll_Execute, ExportAll_CanExecute);
+                DeleteCommand = new ActionCommand(Delete_Execute, Delete_CanExecute);
+            }
         }
 
         public void BuildTextureDictionaryList()
